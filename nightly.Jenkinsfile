@@ -1,3 +1,4 @@
+// Should be multibranch pipeline
 pipeline {
     agent { label "RHEL" }
 
@@ -25,7 +26,7 @@ pipeline {
         stage("Build & Deploy Runtimes") {
             steps {
                 // Call kogito-runtimes-deploy
-                build(job:"./kogito-runtimes-deploy/${BRANCH_NAME}", wait: true)
+                build(job:"../kogito-runtimes-deploy/${BRANCH_NAME}", wait: true)
             }
         }
 
