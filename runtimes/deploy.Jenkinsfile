@@ -50,7 +50,7 @@ pipeline {
             echo "send unstable message"
         }
         always {
-            junit '**/target/surefire-reports/**/*.xml'
+            //junit '**/target/surefire-reports/**/*.xml'
             cleanWs()
         }
     }
