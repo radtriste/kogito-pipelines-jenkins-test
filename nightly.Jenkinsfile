@@ -16,7 +16,9 @@ pipeline {
     stages {
         stage("Initialize") {
             steps {
-                env.IMAGE_GEN_TAG = "Nightly-Build-${BUILD_NUMBER}"
+                script {
+                    env.IMAGE_GEN_TAG = "Nightly-Build-${BUILD_NUMBER}"
+                }
             }
         }
 
@@ -31,6 +33,7 @@ pipeline {
             steps {
                 // Call kogito-images-deploy
                 // Temp Registry and Generated tag
+                echo "Build & Deploy Images"
             }
         }
 
@@ -38,6 +41,7 @@ pipeline {
             steps {
                 // Call kogito-images-deploy
                 // Temp Registry and Generated tag
+                echo "Build & Deploy Operator"
             }
         }
 
@@ -46,6 +50,7 @@ pipeline {
                 // Call kogito-images-promote
                 // Old = Temp registry and Generated tag
                 // New = Nightly registry & nightly-{date} as tag
+                echo "Promote Images"
             }
         }
 
@@ -54,18 +59,18 @@ pipeline {
                 // Call kogito-images-promote
                 // Old = Temp registry and Generated tag
                 // New = Nightly registry & nightly-{date} as tag
+                echo "Promote Operator"
             }
         }
     }
     post {
         failure {
             // Send message here
-        }
-        aborted {
-            // Send message here
+            echo "Send failing message"
         }
         unstable {
             // Send message here
+            echo "Send unstable message"
         }
     }
 }
