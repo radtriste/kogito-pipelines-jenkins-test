@@ -27,32 +27,18 @@ pipeline {
         stage('Build kogito-runtimes') {
             steps {
                 script {
-                    echo "maven.runMavenWithSubmarineSettings('clean deploy', false)"
+                    echo "Test & Deploy runtimes"
                 }
             }
         }
         stage('Build kogito-apps') {
             steps {
-                echo """
-                    checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], browser: [$class: 'GithubWeb', repoUrl: 'git@github.com:kiegroup/kogito-apps.git'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'kogito-apps']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'kie-ci-user-key', url: 'git@github.com:kiegroup/kogito-apps.git']]])
-                    dir("kogito-apps") {
-                        script {
-                        maven.runMavenWithSubmarineSettings('clean deploy', false)
-                        }
-                    }
-                """
+                echo "Checkout & Test & Deploy apps"
             }
         }
         stage('Build kogito-examples') {
             steps {
-                echo """
-                    checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], browser: [$class: 'GithubWeb', repoUrl: 'git@github.com:kiegroup/kogito-examples.git'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'kogito-examples']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'kie-ci-user-key', url: 'git@github.com:kiegroup/kogito-examples.git']]])
-                    dir("kogito-examples") {
-                        script {
-                            maven.runMavenWithSubmarineSettings('clean deploy', false)
-                        }
-                    }
-                """
+                echo "Checkout & Test & Deploy examples"
             }
         }
     }
