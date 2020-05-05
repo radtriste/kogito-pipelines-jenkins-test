@@ -42,7 +42,7 @@ pipeline {
                 // Call kogito-images-deploy
                 // Temp Registry and Generated tag
                 echo "Build & Deploy Images"
-                startAndWaitForRemoteBuild("tristan-pipelines-kogito-images-deploy-single")
+                startAndWaitForRemoteBuild("tristan-pipelines-kogito-images-deploy-single", 200)
             }
         }
 
@@ -84,20 +84,31 @@ pipeline {
     }
 }
 
-void startAndWaitForRemoteBuild(String jobName){
+void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
     String url = "${params.JENKINS_CLOUD_ROOT_URL}/job/${jobName}"
     def exitCode = sh (script:"curl -X POST \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/build?token=${IMAGES_DEPLOY_REMOTE_TOKEN}", returnStatus: true)
     if (exitCode != 0) {
         error "Error starting build for job ${jobName}"
     }
 
-    exitCode = sh (script:"curl -X POST \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/lastBuild/api/json > curl_result", returnStatus: true)
-    if (exitCode != 0) {
-        error "Error getting latest build for job ${jobName}"
-    }
-    def status = readJson file: "curl_result"
-    if (status.result != "SUCCESS") {
-        currentBuild.result = status.result
-        error "Dependent job ${jobName} is in status ${status.result}"
+    timeout = 0
+    while(true)
+        if (timeout > timeoutInSec){
+            error "Timeout waiting for end of job ${jobName}"
+        }
+        sleep(time:2, unit: "SECONDS")
+        timeout += 2
+        
+        exitCode = sh (script:"curl -X POST \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/lastBuild/api/json > curl_result", returnStatus: true)
+        if (exitCode != 0) {
+            error "Error getting latest build for job ${jobName}"
+        }
+        def status = readJson file: "curl_result"
+        if (status.result != "SUCCESS") {
+            currentBuild.result = status.result
+            error "Dependent job ${jobName} is in status ${status.result}"
+        }else {
+            break
+        }
     }
 }
