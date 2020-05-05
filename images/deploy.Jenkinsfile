@@ -85,7 +85,8 @@ pipeline{
             echo "send unstable message"
         }
         always {
-            junit 'target/test/results/*.xml'
+            //junit 'target/test/results/*.xml'
+            echo "Get junit files"
         }
     }
 }
