@@ -1,5 +1,5 @@
 pipeline {
-    agent { label "rhel8" }
+    agent { label "RHEL" }
 
     parameters {
         string(name: 'OPENSHIFT_URL_DOMAIN', defaultValue: 'openshift.com', description: 'Openshift url suffix. All other openshift url(s) will be setup according to that one')

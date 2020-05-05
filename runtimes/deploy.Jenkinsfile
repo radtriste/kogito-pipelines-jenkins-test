@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label 'rhel-8'
+        label 'RHEL'
     }
     // environment {
     //     KOGITO_CI_EMAIL_TO = credentials('KOGITO_CI_EMAIL_TO')
