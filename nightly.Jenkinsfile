@@ -15,11 +15,11 @@ pipeline {
         string(name: 'OPENSHIFT_PASSWORD', defaultValue: '', description: 'Openshift password')
     }
 
-    environment {
+    // environment {
         // Keep here for documentation on the pipeline
         // Keep commented as env defined here is immutable
         // IMAGE_GEN_TAG = to be defined in `Initialize` stage
-    }
+    // }
 
     stages {
         stage("Initialize") {
