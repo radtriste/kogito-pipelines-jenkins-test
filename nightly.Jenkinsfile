@@ -92,7 +92,7 @@ void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
     }
 
     timeout = 0
-    while(true)
+    while(true) {
         if (timeout > timeoutInSec){
             error "Timeout waiting for end of job ${jobName}"
         }
@@ -107,7 +107,7 @@ void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
         if (status.result != "SUCCESS") {
             currentBuild.result = status.result
             error "Dependent job ${jobName} is in status ${status.result}"
-        }else {
+        } else {
             break
         }
     }
