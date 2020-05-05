@@ -1,54 +1,91 @@
-pipeline {
-    agent { label "rhel8" }
+//Checks master branch for updates every day
+//If found triggers the pipeline, 
+//The pipeline is set to run between 12:00AM - 3:00AM UTC
 
-    parameters {
-        // TODO
+pipeline{
+    agent { label 'jenkins-slave'}
+    //  triggers{
+    //     pollSCM(
+    //         scmpoll_spec: '@midnight', 
+    //         ignorePostCommitHooks: true
+    //     )
+    // }
+    stages{
+        stage('Initialization'){
+            steps{
+                echo "Initialization"
+            }
+        }
+        stage('Prepare offline kogito-examples'){
+            steps{
+                echo "Prepare offline kogito-examples"
+            }
+        }
+        stage('Build and test kogito-quarkus-ubi8 image'){
+            steps{
+                echo "Build and test kogito-quarkus-ubi8 image"
+            }
+        }
+        stage('Build and test kogito-quarkus-jvm-ubi8 image'){
+            steps{
+                echo "Build and test kogito-quarkus-jvm-ubi8 image"
+            }
+        }
+        stage('Build and test kogito-quarkus-ubi8-s2i image'){
+            steps{
+                echo "Build and test kogito-quarkus-ubi8-s2i image"
+            }
+        }
+        stage('Build and test kogito-springboot-ubi8 image'){
+            steps{
+                echo "Build and test kogito-springboot-ubi8 image"
+            }
+        }
+        stage('Build and test kogito-springboot-ubi8-s2i image '){
+            steps{
+                echo "Build and test kogito-springboot-ubi8-s2i image"
+            }
+        }
+        stage('Build and test kogito-data-index image '){
+            steps{
+                echo "Build and test kogito-data-index image"
+            }
+        }
+        stage('Build and test kogito-jobs-service image '){
+            steps{
+                echo "Build and test kogito-jobs-service image"
+            }
+        }
+        stage('Build and test kogito-management-console image '){
+            steps{
+                echo "Build and test kogito-management-console image"
+            }
+        }
+        stage('Tagging'){
+            steps{
+                echo "Tagging"
+            }
+        }
+        stage('Pushing'){
+            steps{
+                echo "Pushing"
+            }
+        }
+        stage('Finishing'){
+            steps{
+                echo "Finishing"
+            }
+        }
     }
-
-    stages {
-        stage('Initialize') {
-            steps {
-                sh 'printenv'
-            }
-        }
-        stage('Build kogito-runtimes') {
-            steps {
-                script {
-                    echo "maven.runMavenWithSubmarineSettings('clean deploy', false)"
-                }
-            }
-        }
-        stage('Build kogito-apps') {
-            steps {
-                checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], browser: [$class: 'GithubWeb', repoUrl: 'git@github.com:kiegroup/kogito-apps.git'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'kogito-apps']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'kie-ci-user-key', url: 'git@github.com:kiegroup/kogito-apps.git']]])
-                dir("kogito-apps") {
-                    script {
-                      maven.runMavenWithSubmarineSettings('clean deploy', false)
-                    }
-                }
-            }
-        }
-        stage('Build kogito-examples') {
-            steps {
-                checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], browser: [$class: 'GithubWeb', repoUrl: 'git@github.com:kiegroup/kogito-examples.git'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'kogito-examples']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'kie-ci-user-key', url: 'git@github.com:kiegroup/kogito-examples.git']]])
-                dir("kogito-examples") {
-                    script {
-                         maven.runMavenWithSubmarineSettings('clean deploy', false)
-                    }
-                }
-            }
-        }
-    }
-    post {
+    post{
         failure {
-            // send message
+            echo "send failure message"
         }
         unstable {
-            // send message
+            echo "send unstable message"
         }
         always {
-            junit '**/target/surefire-reports/**/*.xml'
-            cleanWs()
+            junit 'target/test/results/*.xml'
         }
     }
 }
