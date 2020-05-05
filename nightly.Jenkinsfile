@@ -86,7 +86,7 @@ pipeline {
 
 void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
     String url = "${params.JENKINS_CLOUD_ROOT_URL}/job/${jobName}"
-    def exitCode = sh (script:"curl -X POST \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/build?token=${IMAGES_DEPLOY_REMOTE_TOKEN}", returnStatus: true)
+    def exitCode = sh (script:"curl \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/build?token=${IMAGES_DEPLOY_REMOTE_TOKEN}", returnStatus: true)
     if (exitCode != 0) {
         error "Error starting build for job ${jobName}"
     }
@@ -99,7 +99,7 @@ void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
         sleep(time:2, unit: "SECONDS")
         timeout += 2
         
-        exitCode = sh (script:"curl -X POST \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/lastBuild/api/json > curl_result", returnStatus: true)
+        exitCode = sh (script:"curl \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/lastBuild/api/json > curl_result", returnStatus: true)
         if (exitCode != 0) {
             error "Error getting latest build for job ${jobName}"
         }
