@@ -90,13 +90,11 @@ pipeline {
     }
 }
 
-void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, int timeoutInSec){
-    String jobUrl = "${jenkinsUrl}/job/${jobName}"
-    
+void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, int timeoutInSec){    
     // Get last build before to have the number so we should wait for a new one
     def previousBuildId = getRemoteJobLatestBuild(jobUrl, jenkinsUsername, jenkinsPassword).id
     
-    startRemoteJobBuild(jobUrl, jobToken, jenkinsUsername, jenkinsPassword)
+    startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword)
 
     timeout = 0
     while(true) {
@@ -121,21 +119,25 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     }
 }
 
-void startRemoteJobBuild(String jobUrl, String jobToken, String jenkinsUsername, String jenkinsPassword){
+void startRemoteJobBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword){
     try {
-        httpGet("${jobUrl}/build?token=${jobToken}", jenkinsUsername, jenkinsPassword)
+        httpGet("${buildJobUrl(jenkinsUrl, jobName)}/build?token=${jobToken}", jenkinsUsername, jenkinsPassword)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
 }
 
-def getRemoteJobLatestBuild(String jobUrl, String jenkinsUsername, String jenkinsPassword) {
+def getRemoteJobLatestBuild(String jenkinsUrl, String jobName, String jenkinsUsername, String jenkinsPassword) {
     try {
-        def callResult = httpGet("${jobUrl}/lastBuild/api/json", jenkinsUsername, jenkinsPassword)
+        def callResult = httpGet("${buildJobUrl(jenkinsUrl, jobName)}/lastBuild/api/json", jenkinsUsername, jenkinsPassword)
         return readJSON(text: callResult)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
+}
+
+String buildJobUrl(String jenkinsUrl, String jobName){
+    return "${jenkinsUrl}/job/${jobName}"
 }
 
 String httpGet(String url, String username, String password) {
