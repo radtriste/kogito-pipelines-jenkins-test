@@ -92,7 +92,8 @@ pipeline {
 
 void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, int timeoutInSec){    
     // Get last build before to have the number so we should wait for a new one
-    def previousBuildId = getRemoteJobLatestBuild(jobUrl, jenkinsUsername, jenkinsPassword).id
+    def previousBuildId = getRemoteJobLatestBuild(jenkinsUrl, jobName, jenkinsUsername, jenkinsPassword).id
+    echo "Got previous build id ${previousBuildId}"
     
     startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword)
 
@@ -102,7 +103,7 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
             error "Timeout waiting for end of job ${jobName}"
         }
         
-        def latestBuild = getRemoteJobLatestBuild(jobUrl, jenkinsUsername, jenkinsPassword)
+        def latestBuild = getRemoteJobLatestBuild(jenkinsUrl, jobName, jenkinsUsername, jenkinsPassword)
         if (previousBuildId != latestBuild.id){
             if(!latestBuild.building){
                 if (status.result != "SUCCESS") {
