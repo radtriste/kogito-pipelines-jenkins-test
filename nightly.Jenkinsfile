@@ -131,7 +131,7 @@ void startRemoteJobBuild(String jobUrl, String jobToken, String username, String
 def getRemoteJobLatestBuild(String jobUrl, String username, String password) {
     try {
         def callResult = httpGet("${jobUrl}/lastBuild/api/json", username, password)
-        return readJSON text: callResult
+        return readJSON(text: callResult)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
