@@ -165,15 +165,17 @@ String httpGet(String url, String username, String password) {
 }
 
 String httpCall(String url, String method, String username, String password) {
+    echo "httpCall with url ${url}"
     String auth = ""
     if (username != null && password != null) {
         auth = "-u ${username}:${password}"
     }
-    httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
+    httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} '${url}'", returnStdout: true).trim()
     echo "status = ${httpStatus}"
+    output = sh(script: "cat curl_result", returnStdout: true).trim()
 
     if(!httpStatus.startsWith("2")){
-        error "Error calling url ${url}: Return status ${httpStatus}"
+        error "Error calling url ${url}: Return status ${httpStatus}. Output = ${output}"
     }
-    return sh(script: "cat curl_result", returnStdout: true).trim()
+    return output
 }
