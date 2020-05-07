@@ -94,7 +94,7 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     String jobUrl = "${jenkinsUrl}/job/${jobName}"
     
     // Get last build before to have the number so we should wait for a new one
-    def previousBuildId = getRemoteJobLatestBuild(jobUrl, username, password).id
+    def previousBuildId = getRemoteJobLatestBuild(jobUrl, jenkinsUsername, jenkinsPassword).id
     
     startRemoteJobBuild(jobUrl, jobToken, jenkinsUsername, jenkinsPassword)
 
