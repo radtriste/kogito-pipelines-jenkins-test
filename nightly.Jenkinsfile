@@ -46,16 +46,16 @@ pipeline {
                     // Call kogito-images-deploy
                     // Temp Registry and Generated tag
                     echo "Build & Deploy Images"
-                    def params = [:]
-                    params["DEPLOY_IMAGE_REGISTRY_NAMESPACE"] = "thisisthenamespace"
-                    params["DEPLOY_IMAGE_TAG"] = "thisisthetag"
+                    def buildParams = [:]
+                    buildParams["DEPLOY_IMAGE_REGISTRY_NAMESPACE"] = "thisisthenamespace"
+                    buildParams["DEPLOY_IMAGE_TAG"] = "thisisthetag"
 
                     startAndWaitForRemoteBuild(params.JENKINS_CLOUD_ROOT_URL, 
                                                 "tristan-pipelines-kogito-images-deploy-single",
                                                 params.IMAGES_DEPLOY_REMOTE_TOKEN,
                                                 params.JENKINS_CLOUD_USER, 
                                                 params.JENKINS_CLOUD_API_TOKEN, 
-                                                params,
+                                                buildParams,
                                                 200)
                 }
             }
@@ -99,12 +99,12 @@ pipeline {
     }
 }
 
-void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map params, int timeoutInSec){    
+void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map buildParams, int timeoutInSec){    
     // Get last build before to have the number so we should wait for a new one
     def previousBuildId = getRemoteJobLatestBuild(jenkinsUrl, jobName, jenkinsUsername, jenkinsPassword).id
     echo "Got previous build id ${previousBuildId}"
     
-    startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword, params)
+    startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword, buildParams)
 
     timeout = 0
     while(true) {
@@ -130,11 +130,11 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     }
 }
 
-void startRemoteJobBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map params=[:]){
+void startRemoteJobBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map buildParams=[:]){
     path = ""
-    if(params.size() > 0) {
+    if(buildParams.size() > 0) {
         path = "buildWithParameters?token=${jobToken}"
-        for(def entry : params.entrySet()){
+        for(def entry : buildParams.entrySet()){
             path += "&${entry.getKey()}=${entry.getValue()}"
         }
     }else{
@@ -167,7 +167,7 @@ String httpGet(String url, String username, String password) {
 String httpCall(String url, String method, String username, String password) {
     String auth = ""
     if (username != null && password != null) {
-        auth = "-u ${username}:\${HTTP_PASSWORD}"
+        auth = "-u ${username}:${password}"
     }
     httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
     echo "status = ${httpStatus}"
