@@ -42,7 +42,12 @@ pipeline {
                 // Call kogito-images-deploy
                 // Temp Registry and Generated tag
                 echo "Build & Deploy Images"
-                startAndWaitForRemoteBuild("tristan-pipelines-kogito-images-deploy-single", 200)
+                startAndWaitForRemoteBuild(params.JENKINS_CLOUD_ROOT_URL, 
+                                            "tristan-pipelines-kogito-images-deploy-single",
+                                            params.IMAGES_DEPLOY_REMOTE_TOKEN,
+                                            params.JENKINS_CLOUD_USER, 
+                                            params.JENKINS_CLOUD_API_TOKEN, 
+                                            200)
             }
         }
 
@@ -84,12 +89,13 @@ pipeline {
     }
 }
 
-void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
-    String url = "${params.JENKINS_CLOUD_ROOT_URL}/job/${jobName}"
-    def exitCode = sh (script:"curl -u \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/build?token=${IMAGES_DEPLOY_REMOTE_TOKEN}", returnStatus: true)
-    if (exitCode != 0) {
-        error "Error starting build for job ${jobName}"
-    }
+void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, int timeoutInSec){
+    String jobUrl = "${jenkinsUrl}/job/${jobName}"
+    
+    // Get last build before to have the number so we should wait for a new one
+    def previousBuildId = getRemoteJobLatestBuild(jobUrl, username, password).id
+    
+    startRemoteJobBuild(jobUrl, jobToken, username, password)
 
     timeout = 0
     while(true) {
@@ -97,19 +103,56 @@ void startAndWaitForRemoteBuild(String jobName, int timeoutInSec){
             error "Timeout waiting for end of job ${jobName}"
         }
         
-        exitCode = sh (script:"curl -u \"${JENKINS_CLOUD_USER}:${JENKINS_CLOUD_API_TOKEN}\" ${url}/lastBuild/api/json > curl_result", returnStatus: true)
-        if (exitCode != 0) {
-            error "Error getting latest build for job ${jobName}"
-        }
-        def status = readJSON file: "curl_result"
-        if (status.result != "SUCCESS") {
-            currentBuild.result = status.result
-            error "Dependent job ${jobName} is in status ${status.result}"
-        } else {
-            break
-        }
+        def latestBuild = getRemoteJobLatestBuild(jobUrl, username, password)
+        if (previousBuildId != latestBuild.id){
+            if(!latestBuild.building){
+                if (status.result != "SUCCESS") {
+                    currentBuild.result = status.result
+                    error "Dependent job ${jobName} is in status ${status.result}"
+                } else {
+                    break
+                }        
+            }
+        }        
 
         sleep(time:2, unit: "SECONDS")
         timeout += 2
     }
+}
+
+void startRemoteJobBuild(String jobUrl, String jobToken, String username, String password){
+    try {
+        httpGet("${jobUrl}/build?token=${jobToken}", username, password)
+    }catch (e) {
+        error "Error starting build for job ${jobName}: ${e.message}"
+    }
+}
+
+def getRemoteJobLatestBuild(String jobUrl, String username, String password) {
+    try {
+        def callResult = httpGet("${jobUrl}/lastBuild/api/json", username, password)
+        return readJSON text: callResult
+    }catch (e) {
+        error "Error starting build for job ${jobName}: ${e.message}"
+    }
+}
+
+String httpGet(String url, String method) {
+    return httpCall(url, "GET", username, password)
+}
+
+String httpCall(String url, String method, String username, String password) {
+    String auth = ""
+    if (username != null && password != null) {
+        auth = "-u ${username}:\${password}"
+    }
+    withEnv(['HTTP_PASSWORD='+password]) {
+        httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
+        echo "status = ${httpStatus}"
+
+        if(!httpStatus.startsWith("2")){
+            error "Error calling url ${url}: Return status ${httpStatus}"
+        }
+    }
+    return sh(script: "cat curl_result", returnStdout: true).trim()
 }
