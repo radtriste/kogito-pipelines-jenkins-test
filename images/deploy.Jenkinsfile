@@ -4,6 +4,11 @@
 
 pipeline{
     agent { label 'jenkins-slave'}
+
+    parameters {
+        string(name: 'DEPLOY_IMAGE_REGISTRY_NAMESPACE', defaultValue: '', description: 'Image registry')
+        string(name: 'DEPLOY_IMAGE_TAG', defaultValue: '', description: 'Image registry')
+    }
     //  triggers{
     //     pollSCM(
     //         scmpoll_spec: '@midnight', 
@@ -63,12 +68,12 @@ pipeline{
         }
         stage('Tagging'){
             steps{
-                echo "Tagging"
+                echo "Tagging with ${params.DEPLOY_IMAGE_TAG}"
             }
         }
         stage('Pushing'){
             steps{
-                echo "Pushing"
+                echo "Pushing to ${params.DEPLOY_IMAGE_REGISTRY_NAMESPACE}"
             }
         }
         stage('Finishing'){

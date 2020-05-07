@@ -3,10 +3,12 @@ pipeline {
     agent { label "RHEL" }
 
     parameters {
+        // TODO export to Jenkins credentials
         string(name: 'JENKINS_CLOUD_ROOT_URL', defaultValue: '', description: 'To access Kogito Cloud')
         string(name: 'JENKINS_CLOUD_API_TOKEN', defaultValue: '', description: 'To access Kogito Cloud')
         string(name: 'JENKINS_CLOUD_USER', defaultValue: '', description: 'To access Kogito Cloud')
         
+        // TODO export to credentialsId
         string(name: 'IMAGES_DEPLOY_REMOTE_TOKEN', defaultValue: '', description: 'To access Kogito Cloud')
         //string(name: 'OPERATOR_DEPLOY_REMOTE_TOKEN', defaultValue: '', description: 'To access Kogito Cloud')
 
@@ -40,15 +42,22 @@ pipeline {
 
         stage("Build & Deploy Images") {
             steps {
-                // Call kogito-images-deploy
-                // Temp Registry and Generated tag
-                echo "Build & Deploy Images"
-                startAndWaitForRemoteBuild(params.JENKINS_CLOUD_ROOT_URL, 
-                                            "tristan-pipelines-kogito-images-deploy-single",
-                                            params.IMAGES_DEPLOY_REMOTE_TOKEN,
-                                            params.JENKINS_CLOUD_USER, 
-                                            params.JENKINS_CLOUD_API_TOKEN, 
-                                            200)
+                script {
+                    // Call kogito-images-deploy
+                    // Temp Registry and Generated tag
+                    echo "Build & Deploy Images"
+                    def params = [:]
+                    params["DEPLOY_IMAGE_REGISTRY_NAMESPACE"] = "thisisthenamespace"
+                    params["DEPLOY_IMAGE_TAG"] = "thisisthetag"
+
+                    startAndWaitForRemoteBuild(params.JENKINS_CLOUD_ROOT_URL, 
+                                                "tristan-pipelines-kogito-images-deploy-single",
+                                                params.IMAGES_DEPLOY_REMOTE_TOKEN,
+                                                params.JENKINS_CLOUD_USER, 
+                                                params.JENKINS_CLOUD_API_TOKEN, 
+                                                params,
+                                                200)
+                }
             }
         }
 
@@ -90,12 +99,12 @@ pipeline {
     }
 }
 
-void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, int timeoutInSec){    
+void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map params, int timeoutInSec){    
     // Get last build before to have the number so we should wait for a new one
     def previousBuildId = getRemoteJobLatestBuild(jenkinsUrl, jobName, jenkinsUsername, jenkinsPassword).id
     echo "Got previous build id ${previousBuildId}"
     
-    startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword)
+    startRemoteJobBuild(jenkinsUrl, jobName, jobToken, jenkinsUsername, jenkinsPassword, params)
 
     timeout = 0
     while(true) {
@@ -121,9 +130,18 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     }
 }
 
-void startRemoteJobBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword){
+void startRemoteJobBuild(String jenkinsUrl, String jobName, String jobToken, String jenkinsUsername, String jenkinsPassword, Map params=[:]){
+    path = ""
+    if(params.size() > 0) {
+        path = "buildWithParameters?token=${jobToken}"
+        for(def entry : params.entrySet()){
+            path += "&${entry.getKey()}=${entry.getValue()}"
+        }
+    }else{
+        path = "build?token=${jobToken}"
+    }
     try {
-        httpGet("${buildJobUrl(jenkinsUrl, jobName)}/build?token=${jobToken}", jenkinsUsername, jenkinsPassword)
+        httpGet("${buildJobUrl(jenkinsUrl, jobName)}/${path}", jenkinsUsername, jenkinsPassword)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
@@ -151,13 +169,11 @@ String httpCall(String url, String method, String username, String password) {
     if (username != null && password != null) {
         auth = "-u ${username}:\${HTTP_PASSWORD}"
     }
-    withEnv(['HTTP_PASSWORD='+password]) {
-        httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
-        echo "status = ${httpStatus}"
+    httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
+    echo "status = ${httpStatus}"
 
-        if(!httpStatus.startsWith("2")){
-            error "Error calling url ${url}: Return status ${httpStatus}"
-        }
+    if(!httpStatus.startsWith("2")){
+        error "Error calling url ${url}: Return status ${httpStatus}"
     }
     return sh(script: "cat curl_result", returnStdout: true).trim()
 }
