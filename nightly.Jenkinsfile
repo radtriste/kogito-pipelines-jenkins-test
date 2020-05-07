@@ -33,6 +33,7 @@ pipeline {
         stage("Build & Deploy Runtimes") {
             steps {
                 // Call kogito-runtimes-deploy
+                echo "Build & Deploy Runtimes"
                 // build(job:"../kogito-runtimes-deploy/${BRANCH_NAME}", wait: true)
             }
         }
