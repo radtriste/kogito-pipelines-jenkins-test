@@ -104,11 +104,12 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
         }
         
         def latestBuild = getRemoteJobLatestBuild(jenkinsUrl, jobName, jenkinsUsername, jenkinsPassword)
+        echo "Got build id ${latestBuild.id}"
         if (previousBuildId != latestBuild.id){
             if(!latestBuild.building){
-                if (status.result != "SUCCESS") {
-                    currentBuild.result = status.result
-                    error "Dependent job ${jobName} is in status ${status.result}"
+                if (latestBuild.result != "SUCCESS") {
+                    currentBuild.result = latestBuild.result
+                    error "Dependent job ${jobName} is in status ${latestBuild.result}"
                 } else {
                     break
                 }        
@@ -148,7 +149,7 @@ String httpGet(String url, String username, String password) {
 String httpCall(String url, String method, String username, String password) {
     String auth = ""
     if (username != null && password != null) {
-        auth = "-u ${username}:\${password}"
+        auth = "-u ${username}:\${HTTP_PASSWORD}"
     }
     withEnv(['HTTP_PASSWORD='+password]) {
         httpStatus = sh (script: "curl -X ${method} -s -o curl_result -w \"%{http_code}\" ${auth} ${url}", returnStdout: true).trim()
