@@ -33,7 +33,7 @@ pipeline {
         stage("Build & Deploy Runtimes") {
             steps {
                 // Call kogito-runtimes-deploy
-                build(job:"../kogito-runtimes-deploy/${BRANCH_NAME}", wait: true)
+                // build(job:"../kogito-runtimes-deploy/${BRANCH_NAME}", wait: true)
             }
         }
 
@@ -95,7 +95,7 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     // Get last build before to have the number so we should wait for a new one
     def previousBuildId = getRemoteJobLatestBuild(jobUrl, username, password).id
     
-    startRemoteJobBuild(jobUrl, jobToken, username, password)
+    startRemoteJobBuild(jobUrl, jobToken, jenkinsUsername, jenkinsPassword)
 
     timeout = 0
     while(true) {
@@ -103,7 +103,7 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
             error "Timeout waiting for end of job ${jobName}"
         }
         
-        def latestBuild = getRemoteJobLatestBuild(jobUrl, username, password)
+        def latestBuild = getRemoteJobLatestBuild(jobUrl, jenkinsUsername, jenkinsPassword)
         if (previousBuildId != latestBuild.id){
             if(!latestBuild.building){
                 if (status.result != "SUCCESS") {
@@ -120,24 +120,24 @@ void startAndWaitForRemoteBuild(String jenkinsUrl, String jobName, String jobTok
     }
 }
 
-void startRemoteJobBuild(String jobUrl, String jobToken, String username, String password){
+void startRemoteJobBuild(String jobUrl, String jobToken, String jenkinsUsername, String jenkinsPassword){
     try {
-        httpGet("${jobUrl}/build?token=${jobToken}", username, password)
+        httpGet("${jobUrl}/build?token=${jobToken}", jenkinsUsername, jenkinsPassword)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
 }
 
-def getRemoteJobLatestBuild(String jobUrl, String username, String password) {
+def getRemoteJobLatestBuild(String jobUrl, String jenkinsUsername, String jenkinsPassword) {
     try {
-        def callResult = httpGet("${jobUrl}/lastBuild/api/json", username, password)
+        def callResult = httpGet("${jobUrl}/lastBuild/api/json", jenkinsUsername, jenkinsPassword)
         return readJSON(text: callResult)
     }catch (e) {
         error "Error starting build for job ${jobName}: ${e.message}"
     }
 }
 
-String httpGet(String url, String method) {
+String httpGet(String url, String username, String password) {
     return httpCall(url, "GET", username, password)
 }
 
